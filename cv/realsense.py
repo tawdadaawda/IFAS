@@ -6,117 +6,94 @@ import numpy as np
 import cv2
 import base64
 
-from PIL import Image
 
 import os
 
-# Create a pipeline
-pipeline = rs.pipeline()
 
-# Create a config and configure the pipeline to stream
-#  different resolutions of color and depth streams
-config = rs.config()
+class Realsense(object):
+    def __init__(self):
+        # Realsenseのパイプライン作成
+        self.pipeline = rs.pipeline()
 
-# Get device product line for setting a supporting resolution
-pipeline_wrapper = rs.pipeline_wrapper(pipeline)
-pipeline_profile = config.resolve(pipeline_wrapper)
-device = pipeline_profile.get_device()
-device_product_line = str(device.get_info(rs.camera_info.product_line))
+        # パイプラインへ流すのコンフィグ作成
+        self.config = rs.config()
 
-found_rgb = False
-for s in device.sensors:
-    if s.get_info(rs.camera_info.name) == 'RGB Camera':
-        found_rgb = True
-        break
-if not found_rgb:
-    print("The demo requires Depth camera with Color sensor")
-    exit(0)
+        # 深度情報（背景除去に利用）
+        self.clipping_distance = None
 
-config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
+        # alignオブジェクトを作成。alignで深度情報をカラー情報と統合できる。
+        self.align = None
 
-if device_product_line == 'L500':
-    config.enable_stream(rs.stream.color, 960, 540, rs.format.bgr8, 30)
-else:
-    config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+        # 背景除去用の色指定
+        self.background_color = 153
 
-# Start streaming
-profile = pipeline.start(config)
+    def __del__(self):
+        # Realsenseのパイプライン削除
+        self.pipeline.stop()
 
-# Getting the depth sensor's depth scale (see rs-align example for explanation)
-depth_sensor = profile.get_device().first_depth_sensor()
-depth_scale = depth_sensor.get_depth_scale()
-print("Depth Scale is: ", depth_scale)
+    def configurePipeline(self):
+        # デバイス情報取得
+        pipeline_wrapper = rs.pipeline_wrapper(self.pipeline)
+        pipeline_profile = self.config.resolve(pipeline_wrapper)
+        device = pipeline_profile.get_device()
+        device_product_line = str(device.get_info(rs.camera_info.product_line))
 
-# We will be removing the background of objects more than
-#  clipping_distance_in_meters meters away
-clipping_distance_in_meters = 1.8  # 1 meter
-clipping_distance = clipping_distance_in_meters / depth_scale
+        # 深度カメラのストリーム設定
+        self.config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
 
-# Create an align object
-# rs.align allows us to perform alignment of depth frames to others frames
-# The "align_to" is the stream type to which we plan to align depth frames.
-align_to = rs.stream.color
-align = rs.align(align_to)
+        # カラーカメラのストリーム設定
+        if device_product_line == 'L500':
+            self.config.enable_stream(
+                rs.stream.color, 960, 540, rs.format.bgr8, 30)
+        else:
+            self.config.enable_stream(
+                rs.stream.color, 640, 480, rs.format.bgr8, 30)
 
-# Streaming loop
-try:
-    while True:
-        # Get frameset of color and depth
-        frames = pipeline.wait_for_frames()
-        # frames.get_depth_frame() is a 640x360 depth image
+    def startStream(self):
+        # ストリーミング開始
+        profile = self.pipeline.start(self.config)
 
-        # Align the depth frame to color frame
-        aligned_frames = align.process(frames)
+        # 深度センサーのdepth scaleを取得(深度画像の画素値をメートルに換算する際に必要)
+        depth_sensor = profile.get_device().first_depth_sensor()
+        depth_scale = depth_sensor.get_depth_scale()
+        print("Depth Scale is: ", depth_scale)
 
-        # Get aligned frames
-        # aligned_depth_frame is a 640x480 depth image
+        # clipping_distance_in_meters に指定した距離(メートル)から奥の背景を除去する。
+        clipping_distance_in_meters = 1.8
+
+        # メートル→センサーの深度に変換。
+        self.clipping_distance = clipping_distance_in_meters / depth_scale
+
+        # alignオブジェクトを設定
+        align_to = rs.stream.color
+        self.align = rs.align(align_to)
+
+    def getFrame(self):
+
+        # カラーと深度のフレームを取得
+        frames = self.pipeline.wait_for_frames()
+
+        # カラーのフレームと深度のフレームを統合
+        aligned_frames = self.align.process(frames)
+
+        # 統合したフレームを取得。 サイズは 640x480
         aligned_depth_frame = aligned_frames.get_depth_frame()
         color_frame = aligned_frames.get_color_frame()
 
-        # Validate that both frames are valid
-        if not aligned_depth_frame or not color_frame:
-            continue
-
+        # 深度画像を生成(numpy)
         depth_image = np.asanyarray(aligned_depth_frame.get_data())
+
+        # カラー画像を生成(numpy)
         color_image = np.asanyarray(color_frame.get_data())
 
-        # Remove background - Set pixels further than clipping_distance to grey
-        grey_color = 153
-        # depth image is 1 channel, color is 3 channels
+        # 背景除去用設定
+        self.background_color = 153
+        # 深度イメージは1チャネル、カラーは3チャネルなので、深度イメージのチャネル数をカラーイメージに合わせる
         depth_image_3d = np.dstack((depth_image, depth_image, depth_image))
-        #bg_removed = np.where((depth_image_3d > clipping_distance) | (depth_image_3d <= 0), grey_color, color_image)
-        bg_removed = color_image
 
-        # Render images:
-        #   depth align to color on left
-        #   depth on right
-        depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(
-            depth_image, alpha=0.03), cv2.COLORMAP_JET)
-        # images = np.hstack((bg_removed, depth_colormap)
-        images = bg_removed
+        # カラー画像から背景を除去
+        bg_removed = np.where((depth_image_3d > self.clipping_distance) | (
+            depth_image_3d <= 0), self.background_color, color_image)
 
-        im = Image.fromarray(images.astype("uint8"))
-
-        print(im)
-        frame = cv2.imencode(".jpg", images)[1].tobytes()
-        frame = base64.b64encode(frame).decode("utf-8")
-        print("data:image/jpeg;base64,{}".format(frame))
-
-        break
-
-        #cv2.namedWindow('Align Example', cv2.WINDOW_NORMAL)
-        #cv2.imshow('Align Example', images)
-        key = cv2.waitKey(1)
-
-        os.makedirs("C:\IFAS", exist_ok=True)
-        base_path = os.path.join("C:\IFAS", "basename")
-
-        if key == ord('c'):
-            cv2.imwrite('{}.{}'.format(base_path, "jpg"), images)
-        elif key == ord('q') or key == 27:
-            cv2.destroyAllWindows()
-            break
-
-
-finally:
-    pipeline.stop()
+        # カラー画像と、背景除去した画像をそれぞれnumpy配列で返す。
+        return color_image, bg_removed
