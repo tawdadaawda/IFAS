@@ -1,17 +1,12 @@
-# First import the library
+# realsenseをPythonで使うときのライブラリ
 import pyrealsense2 as rs
-# Import Numpy for easy array manipulation
+# 画像ファイルの処理用Numpy
 import numpy as np
-# Import OpenCV for easy image rendering
-import cv2
-import base64
-
-
-import os
 
 
 class Realsense(object):
     def __init__(self):
+        ### TODO: 変数を初期化 ###
         # Realsenseのパイプライン作成
         self.pipeline = rs.pipeline()
 
@@ -28,10 +23,11 @@ class Realsense(object):
         self.background_color = 153
 
     def __del__(self):
-        # Realsenseのパイプライン削除
+        ### TODO: Realsenseのパイプライン削除 ###
         self.pipeline.stop()
 
     def configurePipeline(self):
+        ### TODO: パイプラインにコンフィグを入れ設定 ###
         # デバイス情報取得
         pipeline_wrapper = rs.pipeline_wrapper(self.pipeline)
         pipeline_profile = self.config.resolve(pipeline_wrapper)
@@ -50,6 +46,7 @@ class Realsense(object):
                 rs.stream.color, 640, 480, rs.format.bgr8, 30)
 
     def startStream(self):
+        ### TODO: パイプラインでストリーム開始 ###
         # ストリーミング開始
         profile = self.pipeline.start(self.config)
 
@@ -69,6 +66,7 @@ class Realsense(object):
         self.align = rs.align(align_to)
 
     def getFrame(self):
+        ### TODO: 通常のカラー画像と、背景除去済みのカラー画像を返す ###
 
         # カラーと深度のフレームを取得
         frames = self.pipeline.wait_for_frames()
