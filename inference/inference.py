@@ -2,7 +2,7 @@ from numpy.core.fromnumeric import squeeze
 import numpy as np
 from openvino.inference_engine import IECore
 import sys
-import openvino_wrap
+from . import openvino_wrap
 args = sys.argv
 
 
@@ -38,6 +38,6 @@ class inferenceEngine(object):
         blob, result = self.model.get_output()
 
         # opencvで使えるように次元を削減
-        output_image = np.squeeze(result)
+        output = np.squeeze(result)
 
-        return output_image
+        return output

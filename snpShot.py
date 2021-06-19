@@ -6,12 +6,16 @@ import PIL.Image, PIL.ImageTk
 from PIL import ImageTk, Image
 from tkinter import font
 import time
+from cv.realsense import Realsense
+from inference.inference import inferenceEngine
 
 filename = ""
 isStop = 0
 class Application(tk.Frame):
     def __init__(self,master, video_source=0):
         super().__init__(master)
+        self.model = r"C:\Program\IFAS\IFAS\IR\face-detection-retail-0005"
+        self.inferenceEngine = inferenceEngine(self.model)
 
         self.master.geometry("700x700")
         self.master.title("Tkinter with Video Streaming and Capture")
@@ -32,9 +36,11 @@ class Application(tk.Frame):
         # Open the video source
         # ---------------------------------------------------------
 
-        self.vcap = cv2.VideoCapture( video_source )
-        self.width = self.vcap.get( cv2.CAP_PROP_FRAME_WIDTH )
-        self.height = self.vcap.get( cv2.CAP_PROP_FRAME_HEIGHT )
+        self.realsense = Realsense()
+        self.realsense.configurePipeline()
+        self.realsense.startStream()
+        self.width = 640
+        self.height = 480
 
         # ---------------------------------------------------------
         # Widget
@@ -82,9 +88,9 @@ class Application(tk.Frame):
 
     def update(self):
         #Get a frame from the video source
-        _, frame = self.vcap.read()
+        color_img, bg_removed_img = self.realsense.getFrame()
 
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = cv2.cvtColor(color_img, cv2.COLOR_BGR2RGB)
         global isStop
         if isStop == 0:
             
@@ -101,8 +107,22 @@ class Application(tk.Frame):
 
     def press_snapshot_button(self):
         # Get a frame from the video source
-        _, frame = self.vcap.read()
-        frame1 = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        color_img, bg_removed_img = self.realsense.getFrame()
+        frame1 = cv2.cvtColor(bg_removed_img, cv2.COLOR_BGR2RGB)
+
+        output = self.inferenceEngine.infer(frame1)
+
+        for detection in output:
+            confidence = float(detection[2])
+
+            xmin = int(detection[3] * frame1.shape[1])
+            ymin = int(detection[4] * frame1.shape[0])
+            xmax = int(detection[5] * frame1.shape[1])
+            ymax = int(detection[6] * frame1.shape[0])
+        
+            if confidence > 0.5:
+                cv2.rectangle(frame1, (xmin, ymin), (xmax, ymax), color=(240, 180, 0), thickness=3)
+
 
         cv2.imwrite( "frame-" + time.strftime( "%Y-%d-%m-%H-%M-%S" ) + ".jpg",
                      cv2.cvtColor( frame1, cv2.COLOR_BGR2RGB ) )

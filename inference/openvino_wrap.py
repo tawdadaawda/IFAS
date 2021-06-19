@@ -1,9 +1,4 @@
-import os
-import sys
-import logging as log
 import numpy as np
-from openvino.inference_engine import IECore
-import datetime
 import cv2
 
 
