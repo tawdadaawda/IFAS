@@ -1,2 +1,0 @@
-# IFAS
-for IFAS (AI HACKATHON)
