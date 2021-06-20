@@ -1,7 +1,7 @@
 from components.setImage import SetImage
 
 
-class topScreen(object):
+class choose2Screen(object):
     def __init__(self):
 
         None

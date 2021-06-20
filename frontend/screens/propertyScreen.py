@@ -1,7 +1,7 @@
 from components.setImage import SetImage
 
 
-class topScreen(object):
+class propertyScreen(object):
     def __init__(self):
 
         None

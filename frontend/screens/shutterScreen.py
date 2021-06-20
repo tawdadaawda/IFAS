@@ -1,7 +1,7 @@
 from components.setImage import SetImage
 
 
-class topScreen(object):
+class shutterScreen(object):
     def __init__(self):
 
         None

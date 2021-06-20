@@ -1,5 +1,14 @@
 from screens.fittingScreen import fittingScreen
 from screens.topScreen import topScreen
+from screens.choose2Screen import choose2Screen
+from screens.chooseScreen import chooseScreen
+from screens.completeScreen import completeScreen
+from screens.fitting2Screen import fitting2Screen
+from screens.propertyScreen import propertyScreen
+from screens.purchaseScreen import purchaseScreen
+from screens.shutterScreen import shutterScreen
+from screens.similarOrSameScreen import similarOrSameScreen
+
 import cv2
 import tkinter as tk
 from PIL import Image, ImageTk
@@ -78,9 +87,32 @@ class App(tk.Tk):
     def createTopScreen(self):
         topScreen.createScreen(self, width, height)
 
-    # 試着画面生成
+    def createChooseScreen(self):
+        chooseScreen.createScreen(self, width, height)
+
+    def createChoose2Screen(self):
+        choose2Screen.createScreen(self, width, height)
+
+    def createShutterScreen(self):
+        shutterScreen.createScreen(self, width, height)
+
     def createFittingScreen(self):
         fittingScreen.createScreen(self, width, height)
+
+    def createSimilarOrSameScreen(self):
+        similarOrSameScreen.createScreen(self, width, height)
+
+    def createPropertyScreen(self):
+        propertyScreen.createScreen(self, width, height)
+
+    def createFitting2Screen(self):
+        fitting2Screen.createScreen(self, width, height)
+
+    def createPurchaseScreen(self):
+        purchaseScreen.createScreen(self, width, height)
+
+    def createCompleteScreen(self):
+        completeScreen.createScreen(self, width, height)
 
     # def start_cap(self):
     # if not self.capture_flag:
@@ -129,7 +161,7 @@ class App(tk.Tk):
             self.screenTransition("snapShot")
 
     def start(self):
-        self.createTopScreen()
+        self.createFittingScreen()
         self.mainloop()
 
 

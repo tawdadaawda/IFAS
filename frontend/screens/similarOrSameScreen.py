@@ -1,7 +1,7 @@
 from components.setImage import SetImage
 
 
-class topScreen(object):
+class similarOrSameScreen(object):
     def __init__(self):
 
         None

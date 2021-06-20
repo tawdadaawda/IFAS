@@ -9,6 +9,13 @@ def homeClicked(event, frame, mainFrameInfo):
     mainFrameInfo.screenTransition("homeClicked")
 
 
+def homeToChoosing(event, frame, mainFrameInfo):
+    print(event.widget)
+    print("homeToChoosing click")
+    frame.destroy()
+    mainFrameInfo.screenTransition("homeToChoosing_Clicked")
+
+
 def hangerClicked(event, message):
     print(event.widget)
     print("hanger click" + message)
@@ -51,30 +58,12 @@ class SetImage(object):
         homeImage = ImageTk.PhotoImage(image)
         image_list.append(homeImage)
         frame.home = tk.Canvas(
-            frame, width=width, height=height, background=bg)
-        frame.home.create_image(0, 0, image=homeImage)
+            frame, width=width, height=height, background=bg, highlightthickness=0)
+        frame.home.create_image(width/2, height/2, image=homeImage)
         frame.home.bind("<1>", lambda event, frame=frame, mainFrameInfo=mainFrameInfo:
                         call(event, frame, mainFrameInfo))
         # frame.home.pack()
         frame.home.place(x=x, y=y)
-
-    def setLabel(frame, dataList, mainFrameInfo):
-        for data in dataList:
-            print(data["imagePath"])
-            image = Image.open(data["imagePath"])
-            image = image.resize(
-                (data["width"], data["height"]), Image.ANTIALIAS)
-            image = ImageTk.PhotoImage(image)
-
-            label = tk.Label(frame, image=image, background="black")
-            #label.grid(row=data["y"], column=data["x"])
-
-            print(data["callbackName"])
-            call = eval(data["callbackName"])
-            label.bind("<1>", lambda event, frame=frame, mainFrameInfo=mainFrameInfo:
-                       call(event, frame, mainFrameInfo))
-            # label.pack()
-            label.place(x=data["x"], y=data["y"])
 
     def createToplevel(frame, width, height, x, y, bg="white"):
 
