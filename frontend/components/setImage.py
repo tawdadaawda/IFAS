@@ -2,46 +2,79 @@ import tkinter as tk
 from PIL import Image, ImageTk
 
 
-def homeClicked(event):
+def homeClicked(event, frame, mainFrameInfo):
+    print(event.widget)
     print("home click")
+    frame.destroy()
+    mainFrameInfo.screenTransition("homeClicked")
 
 
-def hangerClicked(event):
-    print("hanger click")
+def hangerClicked(event, message):
+    print(event.widget)
+    print("hanger click" + message)
 
 
-def shopClicked(event):
-    print("shop click")
+def shopClicked(event, message):
+    print(event.widget)
+    print("shop click" + message)
 
 
-def colorClicked(event):
-    print("color click")
+def colorClicked(event, message):
+    print(event.widget)
+    print("event click" + message)
 
 
-def bubblesClicked(event):
-    print("bubbles click")
+def bubblesClicked(event, message):
+    print(event.widget)
+    print("bubble click" + message)
+
+
+image_list = []
 
 
 class SetImage(object):
     def __init__(self):
+
         None
 
-    def setImage(callbackName,  frame, imagePath, width, height, x, y, bg="white"):
-
+    def setImage(callbackName,  frame, imagePath, width, height, x, y, mainFrameInfo, bg="white"):
+        global image_list
         # 画像のリサイズ
-        #basewidth = width
+        # basewidth = width
         image = Image.open(imagePath)
-        #wpercent = (basewidth/float(image.size[0]))
-        #hsize = int((float(image.size[1])*float(wpercent)))
+        # wpercent = (basewidth/float(image.size[0]))
+        # hsize = int((float(image.size[1])*float(wpercent)))
         image = image.resize((width, height), Image.ANTIALIAS)
 
-        frame.homeImage = ImageTk.PhotoImage(image)
+        call = eval(callbackName)
+
+        homeImage = ImageTk.PhotoImage(image)
+        image_list.append(homeImage)
         frame.home = tk.Canvas(
             frame, width=width, height=height, background=bg)
-        frame.home.create_image(0, 0, image=frame.homeImage)
-        frame.home.bind("<1>", eval(callbackName))
-        frame.home.pack()
+        frame.home.create_image(0, 0, image=homeImage)
+        frame.home.bind("<1>", lambda event, frame=frame, mainFrameInfo=mainFrameInfo:
+                        call(event, frame, mainFrameInfo))
+        # frame.home.pack()
         frame.home.place(x=x, y=y)
+
+    def setLabel(frame, dataList, mainFrameInfo):
+        for data in dataList:
+            print(data["imagePath"])
+            image = Image.open(data["imagePath"])
+            image = image.resize(
+                (data["width"], data["height"]), Image.ANTIALIAS)
+            image = ImageTk.PhotoImage(image)
+
+            label = tk.Label(frame, image=image, background="black")
+            #label.grid(row=data["y"], column=data["x"])
+
+            print(data["callbackName"])
+            call = eval(data["callbackName"])
+            label.bind("<1>", lambda event, frame=frame, mainFrameInfo=mainFrameInfo:
+                       call(event, frame, mainFrameInfo))
+            # label.pack()
+            label.place(x=data["x"], y=data["y"])
 
     def createToplevel(frame, width, height, x, y, bg="white"):
 

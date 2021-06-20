@@ -1,3 +1,5 @@
+from screens.fittingScreen import fittingScreen
+from screens.topScreen import topScreen
 import cv2
 import tkinter as tk
 from PIL import Image, ImageTk
@@ -9,6 +11,10 @@ from components.setImage import SetImage
 width = 540
 height = 800
 filename = ""
+
+
+def change_app(window):
+    window.tkraise()
 
 
 class SsFrame(ttk.LabelFrame):
@@ -42,7 +48,11 @@ class App(tk.Tk):
         self.ss_frame = SsFrame(self, text="start_stop_buttons")
         self.ss_frame.pack()
 
-        self.btn_snapshot = tk.Button(text='Snapshot', command=self.snapshot)
+        #self.btn_snapshot = tk.Button(text='Snapshot', command=self.snapshot)
+        # self.btn_snapshot.pack()
+        #self.btn_snapshot.place(x=width/2 - 10, y=height/2)
+
+        self.btn_snapshot = tk.Button(text='Snapshot', command=self.test)
         self.btn_snapshot.pack()
         self.btn_snapshot.place(x=width/2 - 10, y=height/2)
 
@@ -54,69 +64,23 @@ class App(tk.Tk):
         y = self.winfo_y()
         self.geometry("+%d+%d" % (x, y))
 
-    def setImage(frame):
-        iconSize = 50
-        colorButtonSize = 30
-        bubblesW = 540 - 20*2
-        bubblesH = 150
+        # ページ遷移用フラグ
+        self.screenTransitionFlag = None
 
-        # トップレベル生成
-        topLevelWindow = SetImage.createToplevel(
-            frame=frame,
-            width=width,
-            height=height,
-            x=frame.winfo_x(),
-            y=frame.winfo_y()
-        )
+    def screenTransition(self, flag):
+        self.screenTransitionFlag = flag
+        print(self.screenTransitionFlag)
 
-        # ホームボタンクリック処理
-        SetImage.setImage(callbackName="homeClicked",
-                          frame=topLevelWindow,
-                          imagePath=r"../images/home.png",
-                          width=iconSize,
-                          height=iconSize,
-                          x=width - iconSize - 20,
-                          y=20
-                          )
+        # if self.screenTransitionFlag == "homeClicked":
+        #   self.createFittingScreen()
 
-        # ハンガーボタンクリック処理
-        SetImage.setImage(callbackName="hangerClicked",
-                          frame=topLevelWindow,
-                          imagePath=r"../images/hanger.png",
-                          width=iconSize,
-                          height=iconSize,
-                          x=width - 50 - 20,
-                          y=1*(iconSize + 10) + 20
-                          )
+    # トップ画面生成
+    def createTopScreen(self):
+        topScreen.createScreen(self, width, height)
 
-        # カートボタンクリック処理
-        SetImage.setImage(callbackName="shopClicked",
-                          frame=topLevelWindow,
-                          imagePath=r"../images/cart.png",
-                          width=iconSize,
-                          height=iconSize,
-                          x=width - iconSize - 20,
-                          y=2*(iconSize + 10) + 20
-                          )
-
-        # カラーボタンクリック処理
-        SetImage.setImage(callbackName="colorClicked",
-                          frame=topLevelWindow,
-                          imagePath=r"../images/colors1.png",
-                          width=colorButtonSize,
-                          height=colorButtonSize,
-                          x=20,
-                          y=20)
-
-        # バブルボタンクリック処理
-        SetImage.setImage(callbackName="bubblesClicked",
-                          frame=topLevelWindow,
-                          imagePath=r"../images/bubbles1.png",
-                          width=bubblesW,
-                          height=bubblesH,
-                          x=width/2 - bubblesW/2,
-                          y=height - bubblesH - 20
-                          )
+    # 試着画面生成
+    def createFittingScreen(self):
+        fittingScreen.createScreen(self, width, height)
 
     # def start_cap(self):
     # if not self.capture_flag:
@@ -157,8 +121,15 @@ class App(tk.Tk):
         self.capture_flag = True
         print("caputure now\n" + str(filename))
 
+    def test(self):
+        if self.screenTransitionFlag != "homeClicked":
+            self.screenTransition("homeClicked")
+
+        if self.screenTransitionFlag == "homeClicked":
+            self.screenTransition("snapShot")
+
     def start(self):
-        self.setImage()
+        self.createTopScreen()
         self.mainloop()
 
 
